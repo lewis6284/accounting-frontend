@@ -16,15 +16,16 @@ import { getManualRevenues, getAutomaticRevenues } from '../services/revenueServ
 import { getExpenses } from '../services/expenseService';
 import { getCandidates } from '../services/candidateService';
 import { getCandidatePayments, getSalaryPayments } from '../services/paymentService';
+import { getDashboardStats } from '../services/dashboardService';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const [stats, setStats] = useState({
-        revenue: 0,
-        expenses: 0,
-        candidates: 0,
-        pendingCandidates: 0
+        totalRevenue: 0,
+        totalExpenses: 0,
+        totalCandidates: 0,
+        pendingApprovals: 0
     });
     const [loading, setLoading] = useState(true);
     const [chartData, setChartData] = useState([]);
@@ -33,44 +34,24 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Fetch consolidated stats from backend
+                const backendStats = await getDashboardStats();
+                setStats(backendStats);
+
+                // Fetch data for charts and tables (still needed for visualization)
                 const [
                     manualRev,
                     autoRev,
                     expensesData,
-                    candidatesData,
                     candidatePayments,
                     salaryPayments
                 ] = await Promise.all([
                     getManualRevenues(),
                     getAutomaticRevenues(),
                     getExpenses(),
-                    getCandidates(),
                     getCandidatePayments(),
                     getSalaryPayments()
                 ]);
-
-                // Calculate Totals
-                const totalManualRevenue = manualRev.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-                const totalAutoRevenue = autoRev.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-                // Assume Candidate Payments are also Revenue if not included in Automatic
-                const totalCandidatePayments = candidatePayments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-
-                const totalRevenue = totalManualRevenue + (autoRev.length > 0 ? totalAutoRevenue : totalCandidatePayments);
-
-                const totalExpenses = expensesData.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-                const totalSalaries = salaryPayments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-                const allExpenses = totalExpenses + totalSalaries;
-
-                // Candidates
-                const totalCandidates = candidatesData.length;
-                const pending = candidatesData.filter(c => c.status === 'PENDING').length;
-
-                setStats({
-                    revenue: totalRevenue,
-                    expenses: allExpenses,
-                    candidates: totalCandidates,
-                    pendingCandidates: pending
-                });
 
                 // Prepare Chart Data (Last 6 months)
                 const processChartData = () => {
@@ -95,6 +76,8 @@ const Dashboard = () => {
 
                     manualRev.forEach(r => addToMonth(r.date || r.created_at, r.amount, 'revenue'));
                     candidatePayments.forEach(r => addToMonth(r.payment_date || r.created_at, r.amount, 'revenue'));
+                    // Automatic revenues (if any independent ones exist)
+                    autoRev.forEach(r => addToMonth(r.date || r.created_at, r.amount, 'revenue'));
 
                     expensesData.forEach(e => addToMonth(e.date || e.created_at, e.amount, 'expenses'));
                     salaryPayments.forEach(s => addToMonth(s.payment_date || s.created_at, s.amount, 'expenses'));
@@ -139,8 +122,8 @@ const Dashboard = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                    <p className="text-gray-500">Financial Overview & Recent Activity</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+                    <p className="text-gray-500 dark:text-gray-400">Financial Overview & Recent Activity</p>
                 </div>
             </div>
 
@@ -148,25 +131,25 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <DashboardCard
                     title="Total Revenue"
-                    value={`$${stats.revenue.toLocaleString()}`}
+                    value={`$${stats.totalRevenue.toLocaleString()}`}
                     icon={TrendingUp}
                     color="emerald"
                 />
                 <DashboardCard
                     title="Total Expenses"
-                    value={`$${stats.expenses.toLocaleString()}`}
+                    value={`$${stats.totalExpenses.toLocaleString()}`}
                     icon={TrendingDown}
                     color="rose"
                 />
                 <DashboardCard
                     title="Total Candidates"
-                    value={stats.candidates}
+                    value={stats.totalCandidates}
                     icon={Users}
                     color="blue"
                 />
                 <DashboardCard
                     title="Pending Approvals"
-                    value={stats.pendingCandidates}
+                    value={stats.pendingApprovals}
                     icon={AlertCircle}
                     color="amber"
                 />
@@ -174,36 +157,36 @@ const Dashboard = () => {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button onClick={() => navigate('/revenues')} className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col items-center gap-2 group">
-                    <div className="p-3 bg-emerald-50 text-emerald-600 rounded-full group-hover:bg-emerald-100 transition-colors">
-                        <PlusCircle size={24} />
-                    </div>
-                    <span className="font-semibold text-gray-700 text-sm">Add Revenue</span>
-                </button>
-                <button onClick={() => navigate('/expenses')} className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col items-center gap-2 group">
-                    <div className="p-3 bg-rose-50 text-rose-600 rounded-full group-hover:bg-rose-100 transition-colors">
-                        <Wallet size={24} />
-                    </div>
-                    <span className="font-semibold text-gray-700 text-sm">Add Expense</span>
-                </button>
-                <button onClick={() => navigate('/candidates')} className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col items-center gap-2 group">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-full group-hover:bg-blue-100 transition-colors">
-                        <UserPlus size={24} />
-                    </div>
-                    <span className="font-semibold text-gray-700 text-sm">New Candidate</span>
-                </button>
-                <button onClick={() => navigate('/payments')} className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col items-center gap-2 group">
-                    <div className="p-3 bg-purple-50 text-purple-600 rounded-full group-hover:bg-purple-100 transition-colors">
-                        <CreditCard size={24} />
-                    </div>
-                    <span className="font-semibold text-gray-700 text-sm">Process Payment</span>
-                </button>
+                <QuickActionButton
+                    onClick={() => navigate('/revenues')}
+                    icon={PlusCircle}
+                    label="Add Revenue"
+                    color="emerald"
+                />
+                <QuickActionButton
+                    onClick={() => navigate('/expenses')}
+                    icon={Wallet}
+                    label="Add Expense"
+                    color="rose"
+                />
+                <QuickActionButton
+                    onClick={() => navigate('/candidates')}
+                    icon={UserPlus}
+                    label="New Candidate"
+                    color="blue"
+                />
+                <QuickActionButton
+                    onClick={() => navigate('/payments')}
+                    icon={CreditCard}
+                    label="Process Payment"
+                    color="purple"
+                />
             </div>
 
             {/* Charts & Transactions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-96">
-                    <h3 className="font-bold text-gray-800 mb-6">Revenue vs Expenses (Last 6 Months)</h3>
+                <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm h-96">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-6">Revenue vs Expenses (Last 6 Months)</h3>
                     <ResponsiveContainer width="100%" height="90%">
                         <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                             <defs>
@@ -218,9 +201,9 @@ const Dashboard = () => {
                             </defs>
                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
                             <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 12 }} />
-                            <CartesianGrid vertical={false} stroke="#E5E7EB" strokeDasharray="3 3" />
+                            <CartesianGrid vertical={false} stroke="#E5E7EB" strokeOpacity={0.3} />
                             <Tooltip
-                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', backgroundColor: '#1F2937', color: '#F3F4F6' }}
                             />
                             <Area type="monotone" dataKey="revenue" stroke="#10B981" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
                             <Area type="monotone" dataKey="expenses" stroke="#F43F5E" fillOpacity={1} fill="url(#colorExpense)" strokeWidth={2} />
@@ -228,21 +211,21 @@ const Dashboard = () => {
                     </ResponsiveContainer>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-full max-h-96 overflow-hidden flex flex-col">
-                    <h3 className="font-bold text-gray-800 mb-4 shrink-0">Recent Transactions</h3>
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm h-full max-h-96 overflow-hidden flex flex-col">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-4 shrink-0">Recent Transactions</h3>
                     <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
                         {recentTransactions.map((t, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                            <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg shrink-0 ${t.type === 'revenue' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                                    <div className={`p-2 rounded-lg shrink-0 ${t.type === 'revenue' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'}`}>
                                         <Activity size={16} />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-sm font-bold text-gray-900 truncate pr-2">{t.label}</p>
-                                        <p className="text-xs text-gray-500">{new Date(t.date).toLocaleDateString()}</p>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate pr-2">{t.label}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(t.date).toLocaleDateString()}</p>
                                     </div>
                                 </div>
-                                <span className={`font-bold text-sm whitespace-nowrap ${t.type === 'revenue' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                <span className={`font-bold text-sm whitespace-nowrap ${t.type === 'revenue' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                                     {t.type === 'revenue' ? '+' : '-'}${Number(t.amount).toLocaleString()}
                                 </span>
                             </div>
@@ -261,22 +244,40 @@ const Dashboard = () => {
 
 const DashboardCard = ({ title, value, icon: Icon, color }) => {
     const colorClasses = {
-        emerald: 'bg-emerald-100 text-emerald-600',
-        rose: 'bg-rose-100 text-rose-600',
-        blue: 'bg-blue-100 text-blue-600',
-        amber: 'bg-amber-100 text-amber-600',
+        emerald: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
+        rose: 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400',
+        blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+        amber: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
     };
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-4">
                 <div className={`p-3 rounded-xl ${colorClasses[color]}`}>
                     <Icon size={24} />
                 </div>
             </div>
-            <h3 className="text-gray-500 text-sm font-medium mb-1">{title}</h3>
-            <div className="text-2xl font-black text-gray-900">{value}</div>
+            <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">{title}</h3>
+            <div className="text-2xl font-black text-gray-900 dark:text-white">{value}</div>
         </div>
+    );
+};
+
+const QuickActionButton = ({ onClick, icon: Icon, label, color }) => {
+    const colorClasses = {
+        emerald: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:group-hover:bg-emerald-900/40',
+        rose: 'bg-rose-50 text-rose-600 group-hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:group-hover:bg-rose-900/40',
+        blue: 'bg-blue-50 text-blue-600 group-hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:group-hover:bg-blue-900/40',
+        purple: 'bg-purple-50 text-purple-600 group-hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:group-hover:bg-purple-900/40',
+    };
+
+    return (
+        <button onClick={onClick} className="p-4 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col items-center gap-2 group">
+            <div className={`p-3 rounded-full transition-colors ${colorClasses[color]}`}>
+                <Icon size={24} />
+            </div>
+            <span className="font-semibold text-gray-700 dark:text-gray-300 text-sm">{label}</span>
+        </button>
     );
 };
 
