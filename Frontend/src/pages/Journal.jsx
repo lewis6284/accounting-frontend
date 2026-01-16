@@ -153,8 +153,8 @@ const Journal = () => {
                         onChange={e => setFilters({ ...filters, type: e.target.value })}
                     >
                         <option value="">All Types</option>
-                        <option value="ENTRY">ENTRY (Income)</option>
-                        <option value="EXIT">EXIT (Expense)</option>
+                        <option value="ENTRY">Income</option>
+                        <option value="EXIT">Expense</option>
                     </select>
                 </div>
                 <button
