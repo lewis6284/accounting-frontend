@@ -4,7 +4,7 @@ import Modal from '../components/Modal';
 import QRCodeGenerator from '../components/QRCodeGenerator';
 import { getExpenses, createExpense, deleteExpense } from '../services/expenseService';
 import { useGlobal } from '../context/GlobalContext';
-import { Plus, TrendingDown, Trash2, QrCode, AlertCircle, Calendar, Hash, Tag, User, Users, FileText, CreditCard } from 'lucide-react';
+import { Plus, TrendingDown, Trash2, QrCode, AlertCircle, Calendar, Hash, Tag, User, Users, FileText, CreditCard, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Expenses = () => {

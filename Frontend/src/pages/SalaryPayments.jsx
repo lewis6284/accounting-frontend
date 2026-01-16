@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Table, { TableRow, TableCell } from '../components/Table';
 import Modal from '../components/Modal';
 import QRCodeGenerator from '../components/QRCodeGenerator';
-import { getSalaryPayments } from '../services/paymentService'; // Need to check if this export exists or needs refactoring
-import { createSalaryPayment, getEmployees } from '../services/employeeService'; // Check imports
+import { getSalaryPayments, createSalaryPayment } from '../services/paymentService';
+import { getEmployees } from '../services/employeeService';
 import { useGlobal } from '../context/GlobalContext';
 import { UserCheck, Plus, QrCode } from 'lucide-react';
 import toast from 'react-hot-toast';

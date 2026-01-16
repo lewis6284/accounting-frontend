@@ -10,10 +10,7 @@ export const createEmployee = async (data) => {
     return response.data;
 };
 
-export const createSalaryPayment = async (data) => {
-    const response = await api.post('/payments/salary', data);
-    return response.data;
-};
+
 
 export const updateEmployee = async (id, data) => {
     const response = await api.put(`/employees/${id}`, data);
