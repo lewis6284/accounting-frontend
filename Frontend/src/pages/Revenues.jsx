@@ -32,17 +32,22 @@ const Revenues = () => {
 
     const loadRevenues = async () => {
         try {
+            console.log("📂 [Revenues] Fetching all revenues...");
             const man = await getManualRevenues();
             const auto = await getAutomaticRevenues();
+            console.log("✅ [Revenues] Received manual:", man);
+            console.log("✅ [Revenues] Received automatic:", auto);
             setManualRevenues(man);
             setAutomaticRevenues(auto);
         } catch (error) {
+            console.error("❌ [Revenues] Load failed:", error);
             toast.error('Failed to load revenues');
         }
     };
 
     const handleCreateRevenue = async (e) => {
         e.preventDefault();
+        console.log("📤 [Revenues] Recording manual revenue:", revenueForm);
         try {
             await createManualRevenue(revenueForm);
             toast.success(`Revenue recorded successfully`);
@@ -50,6 +55,7 @@ const Revenues = () => {
             loadRevenues();
             setRevenueForm({ revenue_type_id: '', revenue_name: '', amount: '', date: new Date().toISOString().split('T')[0], account_id: '', description: '' });
         } catch (error) {
+            console.error("❌ [Revenues] Record failed:", error.response?.data || error.message);
             toast.error('Failed to record revenue');
         }
     };
@@ -132,13 +138,6 @@ const Revenues = () => {
                                                 title="View QR Code"
                                             >
                                                 <QrCode size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteRevenue(rev.id)}
-                                                className="text-gray-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"
-                                                title="Delete Entry"
-                                            >
-                                                <Trash2 size={18} />
                                             </button>
                                         </div>
                                     </TableCell>

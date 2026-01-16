@@ -18,22 +18,29 @@ const Suppliers = () => {
 
     const loadData = async () => {
         try {
+            console.log("📂 [Suppliers] Fetching all suppliers...");
             const data = await getSuppliers();
+            console.log("✅ [Suppliers] Received data:", data);
             setSuppliers(data);
         } catch (error) {
+            console.error("❌ [Suppliers] Load failed:", error);
             toast.error("Failed to load suppliers");
         }
     };
 
     const handleAdd = async (e) => {
         e.preventDefault();
+        console.log("📤 [Suppliers] Adding new supplier:", formData);
         try {
             await createSupplier(formData);
             toast.success("Supplier added");
             setFormData({ name: '', phone: '', email: '' });
             setIsAddModalOpen(false);
             loadData();
-        } catch (error) { toast.error("Failed to add supplier"); }
+        } catch (error) {
+            console.error("❌ [Suppliers] Addition failed:", error.response?.data || error.message);
+            toast.error("Failed to add supplier");
+        }
     };
 
     const handleEditClick = (supplier) => {
@@ -44,6 +51,7 @@ const Suppliers = () => {
 
     const handleUpdate = async (e) => {
         e.preventDefault();
+        console.log(`📤 [Suppliers] Updating supplier ${editingId}:`, formData);
         try {
             await updateSupplier(editingId, formData);
             toast.success("Supplier updated");
@@ -52,6 +60,7 @@ const Suppliers = () => {
             setEditingId(null);
             loadData();
         } catch (error) {
+            console.error("❌ [Suppliers] Update failed:", error.response?.data || error.message);
             toast.error("Failed to update supplier");
         }
     };

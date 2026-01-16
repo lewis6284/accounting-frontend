@@ -21,6 +21,8 @@ import CandidatePaymentTypes from './pages/CandidatePaymentTypes';
 import RevenueTypes from './pages/RevenueTypes';
 import Suppliers from './pages/Suppliers';
 import Reports from './pages/Reports';
+import Agencies from './pages/Agencies';
+import Banks from './pages/Banks';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -115,6 +117,16 @@ function App() {
             <Route path="/revenue-types" element={
               <ProtectedRoute>
                 <RevenueTypes />
+              </ProtectedRoute>
+            } />
+            <Route path="/agencies" element={
+              <ProtectedRoute>
+                <Agencies />
+              </ProtectedRoute>
+            } />
+            <Route path="/banks" element={
+              <ProtectedRoute>
+                <Banks />
               </ProtectedRoute>
             } />
 

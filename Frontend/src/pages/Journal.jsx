@@ -31,12 +31,15 @@ const Journal = () => {
     const loadJournals = async () => {
         setLoading(true);
         try {
+            console.log("📂 [Journal] Fetching all journal entries...");
             const data = await getJournals();
+            console.log("✅ [Journal] Received data:", data);
             // Sort by date descending
             const sorted = data.sort((a, b) => new Date(b.date) - new Date(a.date));
             setJournals(sorted);
             setFilteredJournals(sorted);
         } catch (error) {
+            console.error("❌ [Journal] Load failed:", error);
             toast.error('Failed to load journal entries');
         } finally {
             setLoading(false);
@@ -174,8 +177,8 @@ const Journal = () => {
                             <TableCell className="text-sm font-medium text-gray-600">{j.date}</TableCell>
                             <TableCell>
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${j.type === 'ENTRY'
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-rose-100 text-rose-700'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-rose-100 text-rose-700'
                                     }`}>
                                     {j.type}
                                 </span>

@@ -32,15 +32,19 @@ const Expenses = () => {
 
     const loadExpenses = async () => {
         try {
+            console.log("📂 [Expenses] Fetching all expenses...");
             const data = await getExpenses();
+            console.log("✅ [Expenses] Received data:", data);
             setExpenses(data);
         } catch (error) {
+            console.error("❌ [Expenses] Load failed:", error);
             toast.error('Failed to load expenses');
         }
     };
 
     const handleCreateExpense = async (e) => {
         e.preventDefault();
+        console.log("📤 [Expenses] Recording manual expense:", expenseForm);
         try {
             await createExpense(expenseForm);
             toast.success(`Expense recorded successfully`);
@@ -48,6 +52,7 @@ const Expenses = () => {
             loadExpenses();
             setExpenseForm({ date: new Date().toISOString().split('T')[0], amount: '', category_id: '', beneficiary_type: 'OTHER', beneficiary_id: '', account_id: '', description: '' });
         } catch (error) {
+            console.error("❌ [Expenses] Record failed:", error.response?.data || error.message);
             toast.error('Failed to record expense');
         }
     };
@@ -131,13 +136,6 @@ const Expenses = () => {
                                         title="View QR Code"
                                     >
                                         <QrCode size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteExpense(exp.id)}
-                                        className="text-gray-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"
-                                        title="Delete Entry"
-                                    >
-                                        <Trash2 size={18} />
                                     </button>
                                 </div>
                             </TableCell>
@@ -257,7 +255,7 @@ const Expenses = () => {
                     {expenseForm.amount > 1000000 && (
                         <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-100 rounded-lg text-amber-800 text-xs animate-pulse">
                             <AlertCircle size={14} className="mt-0.5 shrink-0" />
-                            <span>This is a high-value transaction ( > 1,000,000 Fbu). Please double-check all details before recording.</span>
+                            <span>This is a high-value transaction (&gt; 1,000,000 Fbu). Please double-check all details before recording.</span>
                         </div>
                     )}
                 </form>

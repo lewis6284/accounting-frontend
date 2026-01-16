@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import { getAccounts } from '../services/accountService';
 import { getExpenseCategories, getCandidatePaymentTypes, getRevenueTypes, getSuppliers } from '../services/basicDataService';
+import { getAgencies } from '../services/agencyService';
+import { getBanks } from '../services/bankService';
 import { getEmployees } from '../services/employeeService';
 import toast from 'react-hot-toast';
 
@@ -13,18 +16,24 @@ export const GlobalProvider = ({ children }) => {
     const [revenueTypes, setRevenueTypes] = useState([]);
     const [suppliers, setSuppliers] = useState([]);
     const [employees, setEmployees] = useState([]);
+    const [agencies, setAgencies] = useState([]);
+    const [banks, setBanks] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const { user } = useAuth();
 
     const refreshGlobalData = async () => {
         try {
             setLoading(true);
-            const [accRes, expRes, candRes, revRes, supRes, empRes] = await Promise.all([
+            const [accRes, expRes, candRes, revRes, supRes, empRes, agencyRes, bankRes] = await Promise.all([
                 getAccounts(),
                 getExpenseCategories(),
                 getCandidatePaymentTypes(),
                 getRevenueTypes(),
                 getSuppliers(),
-                getEmployees()
+                getEmployees(),
+                getAgencies(),
+                getBanks()
             ]);
 
             setAccounts(accRes);
@@ -33,18 +42,21 @@ export const GlobalProvider = ({ children }) => {
             setRevenueTypes(revRes);
             setSuppliers(supRes);
             setEmployees(empRes);
+            setAgencies(agencyRes);
+            setBanks(bankRes);
         } catch (error) {
             console.error("Failed to load global data", error);
-            // Don't toast here to avoid spam on login, handle in components if needed
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        // Initial load
-        // refreshGlobalData(); // Can be triggered by AuthContext login success if needed
-    }, []);
+        // Load data when user is authenticated
+        if (user) {
+            refreshGlobalData();
+        }
+    }, [user]);
 
     return (
         <GlobalContext.Provider value={{
@@ -54,6 +66,8 @@ export const GlobalProvider = ({ children }) => {
             revenueTypes,
             suppliers,
             employees,
+            agencies,
+            banks,
             loading,
             refreshGlobalData
         }}>

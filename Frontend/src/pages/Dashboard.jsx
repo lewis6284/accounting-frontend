@@ -131,13 +131,13 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <DashboardCard
                     title="Total Revenue"
-                    value={`$${stats.totalRevenue.toLocaleString()}`}
+                    value={`${stats.totalRevenue.toLocaleString()} Fbu`}
                     icon={TrendingUp}
                     color="emerald"
                 />
                 <DashboardCard
                     title="Total Expenses"
-                    value={`$${stats.totalExpenses.toLocaleString()}`}
+                    value={`${stats.totalExpenses.toLocaleString()} Fbu`}
                     icon={TrendingDown}
                     color="rose"
                 />
@@ -226,7 +226,7 @@ const Dashboard = () => {
                                     </div>
                                 </div>
                                 <span className={`font-bold text-sm whitespace-nowrap ${t.type === 'revenue' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                                    {t.type === 'revenue' ? '+' : '-'}${Number(t.amount).toLocaleString()}
+                                    {t.type === 'revenue' ? '+' : '-'}{Number(t.amount).toLocaleString()} {t.currency || 'Fbu'}
                                 </span>
                             </div>
                         ))}

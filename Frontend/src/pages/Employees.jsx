@@ -5,11 +5,13 @@ import Modal from '../components/Modal';
 import QRCodeGenerator from '../components/QRCodeGenerator';
 import { getEmployees, createEmployee, createSalaryPayment, updateEmployee, deleteEmployee, softDeleteEmployee } from '../services/employeeService';
 import { useGlobal } from '../context/GlobalContext';
-import { Plus, DollarSign, Edit, Trash2, QrCode, Phone, Briefcase, Calendar } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Plus, DollarSign, Edit, Trash2, QrCode, Phone, Briefcase, Calendar, Building2, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Employees = () => {
-    const { accounts } = useGlobal();
+    const { accounts, agencies } = useGlobal();
+    const { user } = useAuth();
     const [employees, setEmployees] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -20,7 +22,7 @@ const Employees = () => {
 
     // Form States
     const today = new Date().toISOString().split('T')[0];
-    const initialFormState = { name: '', phone: '', job_function: '', monthly_salary: '', hire_date: today, status: 'ACTIVE' };
+    const initialFormState = { name: '', phone: '', job_function: '', monthly_salary: '', hire_date: today, status: 'ACTIVE', agency_id: user?.agency_id || '' };
     const [employeeForm, setEmployeeForm] = useState(initialFormState);
     const [paymentData, setPaymentData] = useState({
         amount: '',
@@ -35,15 +37,19 @@ const Employees = () => {
 
     const loadEmployees = async () => {
         try {
+            console.log("📂 [Employees] Fetching all employees...");
             const data = await getEmployees();
+            console.log("✅ [Employees] Received data:", data);
             setEmployees(data);
         } catch (error) {
+            console.error("❌ [Employees] Load failed:", error);
             toast.error('Failed to load employees');
         }
     };
 
     const handleCreateEmployee = async (e) => {
         e.preventDefault();
+        console.log("📤 [Employees] Creating employee with data:", employeeForm);
         try {
             await createEmployee(employeeForm);
             toast.success('Employee created successfully');
@@ -51,18 +57,21 @@ const Employees = () => {
             loadEmployees();
             setEmployeeForm(initialFormState);
         } catch (error) {
+            console.error("❌ [Employees] Creation failed:", error.response?.data || error.message);
             toast.error('Failed to create employee');
         }
     };
 
     const handleUpdateEmployee = async (e) => {
         e.preventDefault();
+        console.log(`📤 [Employees] Updating employee ${selectedEmployee.id} with data:`, employeeForm);
         try {
             await updateEmployee(selectedEmployee.id, employeeForm);
             toast.success('Employee updated');
             setIsEditModalOpen(false);
             loadEmployees();
         } catch (error) {
+            console.error("❌ [Employees] Update failed:", error.response?.data || error.message);
             toast.error('Failed to update employee');
         }
     };
@@ -86,7 +95,8 @@ const Employees = () => {
             job_function: employee.job_function || '',
             monthly_salary: employee.monthly_salary || '',
             hire_date: employee.hire_date || '',
-            status: employee.status || 'ACTIVE'
+            status: employee.status || 'ACTIVE',
+            agency_id: employee.agency_id || ''
         });
         setIsEditModalOpen(true);
     };
@@ -104,13 +114,16 @@ const Employees = () => {
 
     const handlePayment = async (e) => {
         e.preventDefault();
+        const payload = { ...paymentData, employee_id: selectedEmployee.id };
+        console.log("💰 [Employees] Processing salary payment:", payload);
         try {
-            await createSalaryPayment({ ...paymentData, employee_id: selectedEmployee.id });
+            await createSalaryPayment(payload);
             // Simulate backend dynamic receipt code
             const mockReceiptCode = `REC-SAL-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)}`;
             toast.success(`Salary Payment recorded. Receipt ${mockReceiptCode} generated.`);
             setIsPayModalOpen(false);
         } catch (error) {
+            console.error("❌ [Employees] Payment failed:", error.response?.data || error.message);
             toast.error('Failed to pay salary');
         }
     };
@@ -185,37 +198,60 @@ const Employees = () => {
             <Modal status={isAddModalOpen || isEditModalOpen} isOpen={isAddModalOpen || isEditModalOpen} onClose={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); }} title={isEditModalOpen ? "Edit Employee" : "New Employee"}>
                 <form onSubmit={isEditModalOpen ? handleUpdateEmployee : handleCreateEmployee} className="space-y-4">
                     <div>
-                        <label className="label">Full Name</label>
-                        <input type="text" required className="input-field" value={employeeForm.name} onChange={e => setEmployeeForm({ ...employeeForm, name: e.target.value })} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="label">Phone</label>
-                            <input type="text" className="input-field" value={employeeForm.phone} onChange={e => setEmployeeForm({ ...employeeForm, phone: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="label">Hire Date</label>
-                            <input type="date" required className="input-field" value={employeeForm.hire_date} onChange={e => setEmployeeForm({ ...employeeForm, hire_date: e.target.value })} />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="label">Hire Date</label>
-                        <input type="date" required className="input-field" value={employeeForm.hire_date} onChange={e => setEmployeeForm({ ...employeeForm, hire_date: e.target.value })} />
-                    </div>
-                    <div>
-                        <label className="label">Job Function</label>
+                        <label className="label text-xs font-bold text-gray-400 uppercase tracking-widest">Full Name</label>
                         <div className="relative">
-                            <Briefcase className="absolute left-3 top-3 text-gray-400" size={18} />
-                            <input type="text" className="input-field pl-10" value={employeeForm.job_function} onChange={e => setEmployeeForm({ ...employeeForm, job_function: e.target.value })} />
+                            <User className="absolute left-3 top-3 text-gray-400" size={18} />
+                            <input type="text" required className="input-field pl-10" value={employeeForm.name} onChange={e => setEmployeeForm({ ...employeeForm, name: e.target.value })} placeholder="e.g. John Doe" />
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="label">Monthly Salary (Fbu)</label>
-                            <input type="number" className="input-field" value={employeeForm.monthly_salary} onChange={e => setEmployeeForm({ ...employeeForm, monthly_salary: e.target.value })} />
+
+                    <div className="grid grid-cols-2 gap-5">
+                        <div className="space-y-1.5">
+                            <label className="label text-xs font-bold text-gray-400 uppercase tracking-widest">Phone Number</label>
+                            <div className="relative">
+                                <Phone className="absolute left-3 top-3 text-gray-400" size={18} />
+                                <input type="text" className="input-field pl-10" value={employeeForm.phone} onChange={e => setEmployeeForm({ ...employeeForm, phone: e.target.value })} placeholder="+257..." />
+                            </div>
                         </div>
-                        <div>
-                            <label className="label">Status</label>
+                        <div className="space-y-1.5">
+                            <label className="label text-xs font-bold text-gray-400 uppercase tracking-widest">Agency Assignment</label>
+                            <div className="relative">
+                                <Building2 className="absolute left-3 top-3 text-gray-400" size={18} />
+                                <select className="input-field pl-10" value={employeeForm.agency_id} onChange={e => setEmployeeForm({ ...employeeForm, agency_id: e.target.value })} required>
+                                    <option value="">Select Agency</option>
+                                    {agencies.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-5">
+                        <div className="space-y-1.5">
+                            <label className="label text-xs font-bold text-gray-400 uppercase tracking-widest">Hire Date</label>
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-3 text-gray-400" size={18} />
+                                <input type="date" required className="input-field pl-10" value={employeeForm.hire_date} onChange={e => setEmployeeForm({ ...employeeForm, hire_date: e.target.value })} />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="label text-xs font-bold text-gray-400 uppercase tracking-widest">Job Function</label>
+                            <div className="relative">
+                                <Briefcase className="absolute left-3 top-3 text-gray-400" size={18} />
+                                <input type="text" className="input-field pl-10" value={employeeForm.job_function} onChange={e => setEmployeeForm({ ...employeeForm, job_function: e.target.value })} placeholder="e.g. Accountant" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-5">
+                        <div className="space-y-1.5">
+                            <label className="label text-xs font-bold text-gray-400 uppercase tracking-widest">Monthly Salary (Fbu)</label>
+                            <div className="relative">
+                                <DollarSign className="absolute left-3 top-3 text-gray-400" size={18} />
+                                <input type="number" required className="input-field pl-10 font-mono font-bold" value={employeeForm.monthly_salary} onChange={e => setEmployeeForm({ ...employeeForm, monthly_salary: e.target.value })} placeholder="0.00" />
+                            </div>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="label text-xs font-bold text-gray-400 uppercase tracking-widest">Employment Status</label>
                             <select className="input-field" value={employeeForm.status} onChange={e => setEmployeeForm({ ...employeeForm, status: e.target.value })}>
                                 <option value="ACTIVE">Active</option>
                                 <option value="INACTIVE">Inactive</option>

@@ -4,7 +4,7 @@ import {
     LayoutDashboard, Users, UserCheck, Wallet,
     ArrowDownCircle, ArrowUpCircle, BookOpen,
     FileText, Settings, LogOut, Landmark, UserPlus,
-    Truck, Tag, Receipt, TrendingUp, BarChart, Briefcase
+    Truck, Tag, Receipt, TrendingUp, BarChart, Briefcase, Building2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -46,6 +46,8 @@ const Sidebar = ({ isOpen, toggle }) => {
                 { path: '/expense-categories', name: 'Expense Categories', icon: <Tag size={20} />, roles: ['admin'] },
                 { path: '/candidate-payment-types', name: 'Payment Types', icon: <Receipt size={20} />, roles: ['admin'] },
                 { path: '/revenue-types', name: 'Revenue Types', icon: <BarChart size={20} />, roles: ['admin'] },
+                { path: '/agencies', name: 'Agencies', icon: <Building2 size={20} />, roles: ['admin'] },
+                { path: '/banks', name: 'Banks', icon: <Landmark size={20} />, roles: ['admin'] },
             ]
         }
     ];

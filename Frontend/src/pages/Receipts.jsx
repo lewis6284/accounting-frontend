@@ -29,11 +29,14 @@ const Receipts = () => {
     const loadReceipts = async () => {
         setLoading(true);
         try {
+            console.log("📂 [Receipts] Fetching all receipts...");
             const data = await getReceipts();
+            console.log("✅ [Receipts] Received data:", data);
             const sorted = data.sort((a, b) => new Date(b.date) - new Date(a.date));
             setReceipts(sorted);
             setFilteredReceipts(sorted);
         } catch (error) {
+            console.error("❌ [Receipts] Load failed:", error);
             toast.error('Failed to load receipts archive');
         } finally {
             setLoading(false);

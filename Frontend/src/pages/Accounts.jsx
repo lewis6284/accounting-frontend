@@ -2,17 +2,21 @@ import React, { useState, useEffect } from 'react';
 import Table, { TableRow, TableCell } from '../components/Table';
 import Modal from '../components/Modal';
 import { getAccounts, createAccount, updateAccount, deleteAccount } from '../services/accountService';
-import { Plus, Wallet, Edit, Trash2, Landmark, Smartphone, CreditCard } from 'lucide-react';
+import { useGlobal } from '../context/GlobalContext';
+import { useAuth } from '../context/AuthContext';
+import { Plus, Wallet, Edit, Trash2, Landmark, Smartphone, CreditCard, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Accounts = () => {
+    const { agencies, banks } = useGlobal();
+    const { user } = useAuth();
     const [accounts, setAccounts] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedAccount, setSelectedAccount] = useState(null);
 
-    const [accountForm, setAccountForm] = useState({ name: '', type: 'CASH', balance: 0 });
+    const [accountForm, setAccountForm] = useState({ name: '', type: 'CASH', balance: 0, currency: 'FBu', agency_id: '', bank_id: '' });
 
     useEffect(() => {
         loadAccounts();
@@ -20,34 +24,41 @@ const Accounts = () => {
 
     const loadAccounts = async () => {
         try {
+            console.log("📂 [Accounts] Fetching all accounts...");
             const data = await getAccounts();
+            console.log("✅ [Accounts] Received data:", data);
             setAccounts(data);
         } catch (error) {
+            console.error("❌ [Accounts] Load failed:", error);
             toast.error('Failed to load accounts');
         }
     };
 
     const handleCreate = async (e) => {
         e.preventDefault();
+        console.log("📤 [Accounts] Creating account with data:", accountForm);
         try {
             await createAccount(accountForm);
             toast.success('Account created successfully');
             setIsAddModalOpen(false);
             loadAccounts();
-            setAccountForm({ name: '', type: 'CASH', balance: 0 });
+            setAccountForm({ name: '', type: 'CASH', balance: 0, currency: 'FBu', agency_id: user?.agency_id || '', bank_id: '' });
         } catch (error) {
+            console.error("❌ [Accounts] Creation failed:", error.response?.data || error.message);
             toast.error('Failed to create account');
         }
     };
 
     const handleUpdate = async (e) => {
         e.preventDefault();
+        console.log(`📤 [Accounts] Updating account ${selectedAccount.id} with data:`, accountForm);
         try {
             await updateAccount(selectedAccount.id, accountForm);
             toast.success('Account updated');
             setIsEditModalOpen(false);
             loadAccounts();
         } catch (error) {
+            console.error("❌ [Accounts] Update failed:", error.response?.data || error.message);
             toast.error('Failed to update account');
         }
     };
@@ -65,7 +76,14 @@ const Accounts = () => {
 
     const openEditModal = (account) => {
         setSelectedAccount(account);
-        setAccountForm({ name: account.name, type: account.type, balance: account.balance });
+        setAccountForm({
+            name: account.name,
+            type: account.type,
+            balance: account.balance,
+            currency: account.currency || 'FBu',
+            agency_id: account.agency_id,
+            bank_id: account.bank_id || ''
+        });
         setIsEditModalOpen(true);
     };
 
@@ -93,7 +111,7 @@ const Accounts = () => {
                     <p className="text-gray-500 text-sm">Manage your cash, bank and mobile money accounts</p>
                 </div>
                 <button
-                    onClick={() => { setAccountForm({ name: '', type: 'CASH', balance: 0 }); setIsAddModalOpen(true); }}
+                    onClick={() => { setAccountForm({ name: '', type: 'CASH', balance: 0, currency: 'FBu', agency_id: user?.agency_id || '', bank_id: '' }); setIsAddModalOpen(true); }}
                     className="btn-primary flex items-center gap-2 bg-brand-600"
                 >
                     <Plus size={20} /> Add Account
@@ -114,7 +132,7 @@ const Accounts = () => {
                         </div>
                         <div>
                             <p className="text-sm font-bold text-gray-800 mb-1">{acc.name}</p>
-                            <p className="text-2xl font-black text-gray-900">{acc.balance.toLocaleString()} <span className="text-xs font-normal text-gray-400">Fbu</span></p>
+                            <p className="text-2xl font-black text-gray-900">{acc.balance.toLocaleString()} <span className="text-xs font-normal text-gray-400">{acc.currency || 'FBu'}</span></p>
                         </div>
                     </div>
                 ))}
@@ -136,7 +154,7 @@ const Accounts = () => {
                                     ACTIVE
                                 </span>
                             </TableCell>
-                            <TableCell className="font-mono font-bold text-gray-900">{acc.balance.toLocaleString()} Fbu</TableCell>
+                            <TableCell className="font-mono font-bold text-gray-900">{acc.balance.toLocaleString()} {acc.currency || 'FBu'}</TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-2">
                                     <button onClick={() => openEditModal(acc)} className="text-blue-500 hover:bg-blue-50 p-2 rounded-xl transition-colors" title="Edit">
@@ -167,11 +185,49 @@ const Accounts = () => {
                             <option value="MOBILE">MOBILE (Fintech/Mobile Money)</option>
                         </select>
                     </div>
+                    {accountForm.type === 'BANK' && (
+                        <div>
+                            <label className="label">Associated Bank</label>
+                            <select
+                                className="input-field"
+                                value={accountForm.bank_id}
+                                onChange={e => setAccountForm({ ...accountForm, bank_id: e.target.value })}
+                                required
+                            >
+                                <option value="">Select Bank</option>
+                                {banks.map(b => (
+                                    <option key={b.id} value={b.id}>{b.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="label">Currency</label>
+                            <select className="input-field" value={accountForm.currency} onChange={e => setAccountForm({ ...accountForm, currency: e.target.value })}>
+                                <option value="FBu">FBu (Burundi Franc)</option>
+                                <option value="OMR">OMR (Omani Rial)</option>
+                                <option value="SAR">SAR (Saudi Riyal)</option>
+                                <option value="AED">AED (UAE Dirham)</option>
+                            </select>
+                        </div>
+                        {user?.role === 'ADMIN' && (
+                            <div>
+                                <label className="label">Agency</label>
+                                <select className="input-field" value={accountForm.agency_id} onChange={e => setAccountForm({ ...accountForm, agency_id: e.target.value })} required={!isEditModalOpen}>
+                                    <option value="">Select Agency</option>
+                                    {agencies.map(a => (
+                                        <option key={a.id} value={a.id}>{a.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                    </div>
                     {!isEditModalOpen && (
                         <div>
                             <label className="label">Opening Balance</label>
                             <div className="relative">
-                                <span className="absolute left-3 top-3 text-gray-400 font-bold">Fbu</span>
+                                <span className="absolute left-3 top-3 text-gray-400 font-bold">{accountForm.currency}</span>
                                 <input type="number" className="input-field pl-12" value={accountForm.balance} onChange={e => setAccountForm({ ...accountForm, balance: e.target.value })} />
                             </div>
                         </div>

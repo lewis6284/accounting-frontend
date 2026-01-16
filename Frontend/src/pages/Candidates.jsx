@@ -5,11 +5,13 @@ import Modal from '../components/Modal';
 import QRCodeGenerator from '../components/QRCodeGenerator';
 import { getCandidates, createCandidate, createCandidatePayment, updateCandidate, deleteCandidate } from '../services/candidateService';
 import { useGlobal } from '../context/GlobalContext';
-import { Plus, DollarSign, Edit, Trash2, User, FileText, Globe, Briefcase, QrCode } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Plus, DollarSign, Edit, Trash2, User, FileText, Globe, Briefcase, QrCode, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Candidates = () => {
-    const { candidatePaymentTypes, accounts } = useGlobal();
+    const { candidatePaymentTypes, accounts, agencies } = useGlobal();
+    const { user } = useAuth();
     const [candidates, setCandidates] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -21,9 +23,10 @@ const Candidates = () => {
 
     // Form States
     const initialFormState = {
-        name: '', email: '', phone: '', gender: 'MALE', marital_status: 'SINGLE',
+        name: '', phone: '', gender: 'MALE', marital_status: 'SINGLE',
         nationality: '', position_applied: '', national_id: '',
-        passport_number: '', passport_issue_date: '', passport_expiry_date: '', passport_status: 'NONE'
+        passport_number: '',
+        agency_id: user?.agency_id || ''
     };
     const [candidateForm, setCandidateForm] = useState(initialFormState);
     const [paymentData, setPaymentData] = useState({
@@ -37,17 +40,28 @@ const Candidates = () => {
         loadCandidates();
     }, []);
 
+    // Sync form with user data when it becomes available or changes
+    useEffect(() => {
+        if (user?.agency_id) {
+            setCandidateForm(prev => ({ ...prev, agency_id: user.agency_id }));
+        }
+    }, [user]);
+
     const loadCandidates = async () => {
         try {
+            console.log("📂 [Candidates] Fetching all candidates...");
             const data = await getCandidates();
+            console.log("✅ [Candidates] Received data:", data);
             setCandidates(data);
         } catch (error) {
+            console.error("❌ [Candidates] Load failed:", error);
             toast.error('Failed to load candidates');
         }
     };
 
     const handleCreateCandidate = async (e) => {
         e.preventDefault();
+        console.log("📤 [Candidates] Creating candidate with data:", candidateForm);
         try {
             await createCandidate(candidateForm);
             toast.success('Candidate created successfully');
@@ -55,18 +69,21 @@ const Candidates = () => {
             loadCandidates();
             setCandidateForm(initialFormState);
         } catch (error) {
+            console.error("❌ [Candidates] Creation failed:", error.response?.data || error.message);
             toast.error('Failed to create candidate');
         }
     };
 
     const handleUpdateCandidate = async (e) => {
         e.preventDefault();
+        console.log(`📤 [Candidates] Updating candidate ${selectedCandidate.id} with data:`, candidateForm);
         try {
             await updateCandidate(selectedCandidate.id, candidateForm);
             toast.success('Candidate updated successfully');
             setIsEditModalOpen(false);
             loadCandidates();
         } catch (error) {
+            console.error("❌ [Candidates] Update failed:", error.response?.data || error.message);
             toast.error('Failed to update candidate');
         }
     };
@@ -86,7 +103,6 @@ const Candidates = () => {
         setSelectedCandidate(candidate);
         setCandidateForm({
             name: candidate.name,
-            email: candidate.email || '',
             phone: candidate.phone || '',
             gender: candidate.gender || 'MALE',
             marital_status: candidate.marital_status || 'SINGLE',
@@ -94,9 +110,8 @@ const Candidates = () => {
             position_applied: candidate.position_applied || '',
             national_id: candidate.national_id || '',
             passport_number: candidate.passport_number || '',
-            passport_issue_date: candidate.passport_issue_date || '',
-            passport_expiry_date: candidate.passport_expiry_date || '',
-            passport_status: candidate.passport_status || 'NONE'
+            passport_number: candidate.passport_number || '',
+            agency_id: candidate.agency_id || ''
         });
         setFormTab('personal');
         setIsEditModalOpen(true);
@@ -115,9 +130,11 @@ const Candidates = () => {
 
     const handlePayment = async (e) => {
         e.preventDefault();
+        const payload = { ...paymentData, candidate_id: selectedCandidate.id };
+        console.log("💰 [Candidates] Processing payment for candidate:", payload);
         try {
             // Logic: Create payment -> Backend generates Receipt & Journal
-            await createCandidatePayment({ ...paymentData, candidate_id: selectedCandidate.id });
+            await createCandidatePayment(payload);
 
             // Simulating the dynamic receipt code since backend logic is opaque here, 
             // but in real app the response would contain the new receipt code.
@@ -127,6 +144,7 @@ const Candidates = () => {
             setIsPayModalOpen(false);
             loadCandidates(); // Refresh to potentially show updated status
         } catch (error) {
+            console.error("❌ [Candidates] Payment failed:", error.response?.data || error.message);
             toast.error('Failed to record payment');
         }
     };
@@ -174,7 +192,7 @@ const Candidates = () => {
                 </button>
             </div>
 
-            <Table headers={['Code', 'Name', 'Identity', 'Status', 'Actions']}>
+            <Table headers={['Code', 'Name', 'Agency', 'Identity', 'Status', 'Actions']}>
                 {candidates.map((candidate) => (
                     <TableRow key={candidate.id}>
                         <TableCell className="font-mono text-brand-600 font-semibold text-sm">
@@ -185,6 +203,11 @@ const Candidates = () => {
                                 <span className="font-bold text-gray-900">{candidate.name}</span>
                                 <span className="text-xs text-gray-500">{candidate.position_applied}</span>
                             </div>
+                        </TableCell>
+                        <TableCell>
+                            <span className="text-sm font-medium text-gray-600">
+                                {candidate.Agency?.name || <span className="text-gray-400 italic">None</span>}
+                            </span>
                         </TableCell>
                         <TableCell className="text-sm">
                             <div className="space-y-1">
@@ -241,7 +264,7 @@ const Candidates = () => {
 
                         {/* Section 1: Personal Info */}
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Personal Information</h3>
+                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Personal & Agency Information</h3>
                             <div className="space-y-4">
                                 <div>
                                     <label className="label">Full Name <span className="text-red-500">*</span></label>
@@ -256,8 +279,14 @@ const Candidates = () => {
                                         <input type="text" className="input-field" value={candidateForm.phone} onChange={e => setCandidateForm({ ...candidateForm, phone: e.target.value })} />
                                     </div>
                                     <div>
-                                        <label className="label">Email</label>
-                                        <input type="email" className="input-field" value={candidateForm.email} onChange={e => setCandidateForm({ ...candidateForm, email: e.target.value })} />
+                                        <label className="label">Agency Assignment</label>
+                                        <div className="relative">
+                                            <Building2 className="absolute left-3 top-3 text-gray-400" size={18} />
+                                            <select className="input-field pl-10" value={candidateForm.agency_id} onChange={e => setCandidateForm({ ...candidateForm, agency_id: e.target.value })} required>
+                                                <option value="">Select Agency</option>
+                                                {agencies.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -270,12 +299,11 @@ const Candidates = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="label">Marital Status</label>
-                                        <select className="input-field" value={candidateForm.marital_status} onChange={e => setCandidateForm({ ...candidateForm, marital_status: e.target.value })}>
-                                            <option value="SINGLE">Single</option>
-                                            <option value="MARRIED">Married</option>
-                                            <option value="DIVORCED">Divorced</option>
-                                        </select>
+                                        <label className="label">Nationality</label>
+                                        <div className="relative">
+                                            <Globe className="absolute left-3 top-3 text-gray-400" size={18} />
+                                            <input type="text" className="input-field pl-10" value={candidateForm.nationality} onChange={e => setCandidateForm({ ...candidateForm, nationality: e.target.value })} />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -287,10 +315,10 @@ const Candidates = () => {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="label">Nationality</label>
+                                        <label className="label">Position Applied For</label>
                                         <div className="relative">
-                                            <Globe className="absolute left-3 top-3 text-gray-400" size={18} />
-                                            <input type="text" className="input-field pl-10" value={candidateForm.nationality} onChange={e => setCandidateForm({ ...candidateForm, nationality: e.target.value })} />
+                                            <Briefcase className="absolute left-3 top-3 text-gray-400" size={18} />
+                                            <input type="text" className="input-field pl-10" value={candidateForm.position_applied} onChange={e => setCandidateForm({ ...candidateForm, position_applied: e.target.value })} />
                                         </div>
                                     </div>
                                     <div>
@@ -308,38 +336,22 @@ const Candidates = () => {
                                                 <input type="text" className="input-field pl-10" value={candidateForm.passport_number} onChange={e => setCandidateForm({ ...candidateForm, passport_number: e.target.value })} />
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="label">Issue Date</label>
-                                                <input type="date" className="input-field" value={candidateForm.passport_issue_date} onChange={e => setCandidateForm({ ...candidateForm, passport_issue_date: e.target.value })} />
-                                            </div>
-                                            <div>
-                                                <label className="label">Expiry Date</label>
-                                                <input type="date" className="input-field" value={candidateForm.passport_expiry_date} onChange={e => setCandidateForm({ ...candidateForm, passport_expiry_date: e.target.value })} />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="label">Passport Status</label>
-                                            <select className="input-field" value={candidateForm.passport_status} onChange={e => setCandidateForm({ ...candidateForm, passport_status: e.target.value })}>
-                                                <option value="NONE">None</option>
-                                                <option value="APPLIED">Applied</option>
-                                                <option value="ISSUED">Issued</option>
-                                                <option value="EXPIRED">Expired</option>
-                                            </select>
-                                        </div>
+
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Section 3: Official */}
                         <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Application Details</h3>
-                            <div>
-                                <label className="label">Position Applied For</label>
-                                <div className="relative">
-                                    <Briefcase className="absolute left-3 top-3 text-gray-400" size={18} />
-                                    <input type="text" className="input-field pl-10" value={candidateForm.position_applied} onChange={e => setCandidateForm({ ...candidateForm, position_applied: e.target.value })} />
+                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Additional Details</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="label">Marital Status</label>
+                                    <select className="input-field" value={candidateForm.marital_status} onChange={e => setCandidateForm({ ...candidateForm, marital_status: e.target.value })}>
+                                        <option value="SINGLE">Single</option>
+                                        <option value="MARRIED">Married</option>
+                                        <option value="DIVORCED">Divorced</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -412,11 +424,11 @@ const Candidates = () => {
             </Modal>
 
             {/* Delete Confirmation Modal */}
-            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Delete">
-                <p className="text-gray-600 mb-6">Are you sure you want to delete <strong>{selectedCandidate?.name}</strong>? This action cannot be undone.</p>
+            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Cancel Registration">
+                <p className="text-gray-600 mb-6 font-medium">Are you sure you want to cancel the registration for <strong>{selectedCandidate?.name}</strong>? <br /> This will update their status to <strong>CANCELLED</strong>.</p>
                 <div className="flex gap-4">
-                    <button onClick={() => setIsDeleteModalOpen(false)} className="btn-secondary w-full">Cancel</button>
-                    <button onClick={handleDeleteCandidate} className="btn-primary bg-red-600 hover:bg-red-700 w-full text-white">Delete</button>
+                    <button onClick={() => setIsDeleteModalOpen(false)} className="btn-secondary w-full">Abort</button>
+                    <button onClick={handleDeleteCandidate} className="btn-primary bg-rose-600 hover:bg-rose-700 w-full text-white font-bold">Confirm Cancellation</button>
                 </div>
             </Modal>
         </>

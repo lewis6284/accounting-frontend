@@ -21,9 +21,12 @@ const Reports = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
             try {
+                console.log("📂 [Reports] Fetching consolidated report data...");
                 // Fetch consolidated stats from backend for accuracy on totals
                 const backendStats = await getDashboardStats();
+                console.log("📊 [Reports] Backend Dashboard Stats:", backendStats);
 
                 const [
                     manualRev,
@@ -40,6 +43,8 @@ const Reports = () => {
                     getCandidatePayments(),
                     getSalaryPayments()
                 ]);
+
+                console.log("📈 [Reports] Raw data received:", { manualRev, autoRev, expensesData, candidatesData, candidatePayments, salaryPayments });
 
                 // Calculate Totals (Frontend calculation for newCandidates only)
                 const newCandidates = candidatesData.filter(c => {
@@ -82,10 +87,12 @@ const Reports = () => {
                 expensesData.forEach(e => addToMonth(e.date || e.created_at, e.amount, 'expenses'));
                 salaryPayments.forEach(s => addToMonth(s.payment_date || s.created_at, s.amount, 'expenses'));
 
-                setData(Object.values(months));
+                const finalChartData = Object.values(months);
+                console.log("📊 [Reports] Final chart data prepared:", finalChartData);
+                setData(finalChartData);
                 setLoading(false);
             } catch (error) {
-                console.error("Reports fetch error:", error);
+                console.error("❌ [Reports] Fetch error:", error.response?.data || error.message);
                 toast.error("Failed to load reports data");
                 setLoading(false);
             }
@@ -120,7 +127,7 @@ const Reports = () => {
                         <div className="p-2 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg"><ArrowUpCircle size={20} /></div>
                         <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm uppercase">Total Revenue</h3>
                     </div>
-                    <div className="text-2xl font-black text-gray-900 dark:text-white">${stats.totalRevenue.toLocaleString()}</div>
+                    <div className="text-2xl font-black text-gray-900 dark:text-white">{stats.totalRevenue.toLocaleString()} Fbu</div>
                     <div className="text-xs text-gray-400 dark:text-gray-500 font-bold mt-1">Lifetime Revenue</div>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -128,7 +135,7 @@ const Reports = () => {
                         <div className="p-2 bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 rounded-lg"><ArrowDownCircle size={20} /></div>
                         <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm uppercase">Total Expenses</h3>
                     </div>
-                    <div className="text-2xl font-black text-gray-900 dark:text-white">${stats.totalExpenses.toLocaleString()}</div>
+                    <div className="text-2xl font-black text-gray-900 dark:text-white">{stats.totalExpenses.toLocaleString()} Fbu</div>
                     <div className="text-xs text-gray-400 dark:text-gray-500 font-bold mt-1">Lifetime Expenses</div>
                 </div>
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
