@@ -168,7 +168,8 @@ const CandidateDetails = () => {
                         <Table headers={['Date', 'Type', 'Amount', 'Account']}>
                             {candidate.CandidatePayments?.map(p => (
                                 <TableRow key={p.id}>
-                                    <TableCell className="text-sm text-gray-500">{new Date(p.created_at).toLocaleDateString()}</TableCell>
+                                    <TableCell className="text-sm text-gray-500">{new Date(p.payment_date).toLocaleDateString()}</TableCell>
+
                                     <TableCell>
                                         <span className="bg-brand-50 text-brand-700 px-2 py-1 rounded text-xs font-bold">
                                             {p.CandidatePaymentType?.name || 'Payment'}
