@@ -22,7 +22,7 @@ const Sidebar = ({ isOpen, toggle }) => {
             title: 'Operations',
             items: [
                 { path: '/candidates', name: 'Candidates', icon: <Users size={20} />, roles: ['admin', 'accountant'] },
-                { path: '/employees', name: 'Employees', icon: <UserCheck size={20} />, roles: ['admin', 'accountant'] },
+                { path: '/employees', name: 'Employees', icon: <UserCheck size={20} />, roles: ['admin'] },
                 { path: '/suppliers', name: 'Suppliers', icon: <Truck size={20} />, roles: ['admin', 'accountant'] },
             ]
         },
