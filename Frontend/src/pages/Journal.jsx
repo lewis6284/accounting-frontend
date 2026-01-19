@@ -190,9 +190,9 @@ const Journal = () => {
                                     <span className="text-[10px] opacity-70">ID: {j.source_id}</span>
                                 </div>
                             </TableCell>
-                            <TableCell className={`font-mono font-bold ${j.type === 'ENTRY' ? 'text-green-600' : 'text-rose-600'
+                            <TableCell className={`font-mono font-bold ${String(j.amount).startsWith('-') ? 'text-rose-600' : 'text-green-600'
                                 }`}>
-                                {j.type === 'ENTRY' ? '+' : '-'}{j.amount.toLocaleString()} <span className="text-[10px]">{j.currency}</span>
+                                {j.amount.toLocaleString()} <span className="text-[10px]">{j.currency}</span>
                             </TableCell>
                             <TableCell className="font-mono text-gray-800 font-semibold bg-gray-50/50">
                                 {j.balance_after?.toLocaleString()} <span className="text-[10px] font-normal text-gray-400">Fbu</span>
