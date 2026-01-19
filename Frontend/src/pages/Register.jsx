@@ -16,9 +16,10 @@ const Register = () => {
         e.preventDefault();
         try {
             await register(name, email, password, role);
-            toast.success('Registration successful! Please login.');
-            navigate('/login');
-        } catch (error) {
+            toast.success('Staff added successfully!');
+            navigate('/dashboard');
+        } catch (err) {
+            console.error(err);
             toast.error('Registration failed');
         }
     };
@@ -92,13 +93,9 @@ const Register = () => {
                         type="submit"
                         className="w-full bg-brand-600 text-white font-bold py-3 rounded-xl hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all transform hover:scale-[1.02] mt-4"
                     >
-                        Register
+                        Add staff
                     </button>
                 </form>
-
-                <div className="mt-6 text-center text-gray-600 text-sm">
-                    Already have an account? <Link to="/login" className="text-brand-600 font-semibold hover:underline">Login</Link>
-                </div>
             </div>
         </div>
     );

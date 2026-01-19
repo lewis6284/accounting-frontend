@@ -66,10 +66,6 @@ const Login = () => {
                         Sign In
                     </button>
                 </form>
-
-                <div className="mt-6 text-center text-gray-600 text-sm">
-                    Don't have an account? <Link to="/register" className="text-brand-600 font-semibold hover:underline">Register</Link>
-                </div>
             </div>
         </div>
     );
