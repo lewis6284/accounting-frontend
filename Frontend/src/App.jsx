@@ -23,6 +23,7 @@ import Suppliers from './pages/Suppliers';
 import Reports from './pages/Reports';
 import Agencies from './pages/Agencies';
 import Banks from './pages/Banks';
+import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -128,6 +129,11 @@ function App() {
             <Route path="/banks" element={
               <ProtectedRoute>
                 <Banks />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             } />
 

@@ -29,8 +29,8 @@ const Sidebar = ({ isOpen, toggle }) => {
         {
             title: 'Finance',
             items: [
-                { path: '/payments', name: 'Candidate Payments', icon: <Wallet size={20} />, roles: ['admin', 'accountant'] },
-                { path: '/salary-payments', name: 'Salary Payments', icon: <Briefcase size={20} />, roles: ['admin', 'accountant'] },
+                //{ path: '/payments', name: 'Candidate Payments', icon: <Wallet size={20} />, roles: ['admin', 'accountant'] },
+                //{ path: '/salary-payments', name: 'Salary Payments', icon: <Briefcase size={20} />, roles: ['admin', 'accountant'] },
                 { path: '/revenues', name: 'Revenues', icon: <ArrowUpCircle size={20} />, roles: ['admin', 'accountant'] },
                 { path: '/expenses', name: 'Expenses', icon: <ArrowDownCircle size={20} />, roles: ['admin', 'accountant'] },
                 { path: '/accounts', name: 'Accounts', icon: <Landmark size={20} />, roles: ['admin', 'accountant'] },
@@ -38,18 +38,8 @@ const Sidebar = ({ isOpen, toggle }) => {
                 { path: '/receipts', name: 'Receipts', icon: <FileText size={20} />, roles: ['admin', 'accountant'] },
                 { path: '/reports', name: 'Reports', icon: <TrendingUp size={20} />, roles: ['admin', 'accountant'] },
             ]
-        },
-        {
-            title: 'Settings',
-            items: [
-                { path: '/register', name: 'Add Staff', icon: <UserPlus size={20} />, roles: ['admin'] },
-                { path: '/expense-categories', name: 'Expense Categories', icon: <Tag size={20} />, roles: ['admin'] },
-                { path: '/candidate-payment-types', name: 'Payment Types', icon: <Receipt size={20} />, roles: ['admin'] },
-                { path: '/revenue-types', name: 'Revenue Types', icon: <BarChart size={20} />, roles: ['admin'] },
-                { path: '/agencies', name: 'Agencies', icon: <Building2 size={20} />, roles: ['admin'] },
-                { path: '/banks', name: 'Banks', icon: <Landmark size={20} />, roles: ['admin'] },
-            ]
         }
+
     ];
 
     return (

@@ -110,7 +110,6 @@ const Candidates = () => {
             position_applied: candidate.position_applied || '',
             national_id: candidate.national_id || '',
             passport_number: candidate.passport_number || '',
-            passport_number: candidate.passport_number || '',
             agency_id: candidate.agency_id || ''
         });
         setFormTab('personal');
@@ -231,6 +230,13 @@ const Candidates = () => {
                                     title="View QR Code"
                                 >
                                     <QrCode size={18} />
+                                </button>
+                                <button
+                                    onClick={() => openPayModal(candidate)}
+                                    className="text-green-600 hover:bg-green-50 p-2 rounded-lg transition-colors"
+                                    title="Record Payment"
+                                >
+                                    <DollarSign size={18} />
                                 </button>
                                 <button
                                     onClick={() => openEditModal(candidate)}
